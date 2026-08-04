@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>My Chatbot</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            width: 400px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: #2563eb;
+            color: white;
+            padding: 16px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            height: 450px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            background-color: #2563eb;
+            color: white;
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background-color: #e5e7eb;
+            color: #111827;
+            margin-right: auto;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 12px;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .chat-input button {
+            margin-left: 8px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background-color: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        .chat-input button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            My Chatbot
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                Hello! Ask me a question.
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="Enter your message"
+                autocomplete="off"
+            >
+
+            <button id="sendButton" onclick="sendMessage()">
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const messageInput = document.getElementById("messageInput");
+        const sendButton = document.getElementById("sendButton");
+        const chatMessages = document.getElementById("chatMessages");
+
+        messageInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+            addMessage(message, "user-message");
+
+            messageInput.value = "";
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Request failed");
+                }
+
+                addMessage(data.reply, "bot-message");
+            } catch (error) {
+                addMessage(
+                    "Sorry, I could not connect to the server.",
+                    "bot-message"
+                );
+
+                console.error(error);
+            } finally {
+                sendButton.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        function addMessage(text, messageClass) {
+            const messageElement = document.createElement("div");
+
+            messageElement.classList.add("message", messageClass);
+            messageElement.textContent = text;
+
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
